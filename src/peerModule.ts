@@ -10,7 +10,6 @@ export function enablePeerModule(server: http.Server, path: string, option: { de
 		ws.on('message', function (msg) {
             const { type, id, data } = JSON.parse(msg.toString());
             const pair = socketMap.get(id);
-            if(!pair) return ws.send(createMessage('error', 'undefined id'));
             switch(type){
                 case "join":
                     let result = addSocket(ws, id);
@@ -23,6 +22,7 @@ export function enablePeerModule(server: http.Server, path: string, option: { de
                     break;
 
                 case "offer":
+                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
                     if(pair.state !== 'offer') return ws.send(createMessage('error', 'no waiting offer'));
                     if(pair.sockets[0] !== ws) return ws.send(createMessage('error', 'permission denied'));
                     if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid offer'));
@@ -32,6 +32,7 @@ export function enablePeerModule(server: http.Server, path: string, option: { de
                     break;
 
                 case 'answer':
+                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
                     if(pair.state !== 'answer') return ws.send(createMessage('error', 'no waiting answer'));
                     if(pair.sockets[1] !== ws) return ws.send(createMessage('error', 'permission denied'));
                     if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid answer'));
@@ -41,6 +42,7 @@ export function enablePeerModule(server: http.Server, path: string, option: { de
                     break;
 
                 case 'icecandidate':
+                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
                     const socketIndex = pair.sockets.findIndex(socket => socket === ws);
                     if(pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate'));
                     if(socketIndex === -1) return ws.send(createMessage('error', 'permission denied'));
@@ -49,6 +51,7 @@ export function enablePeerModule(server: http.Server, path: string, option: { de
                     break;
 
                 case 'disconnect':
+                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
                     pair.sockets.splice(pair.sockets.findIndex(socket => socket === ws), 1);
                     pair.state = 'waiting';
                     if(pair.sockets.length === 0) socketMap.delete(id);

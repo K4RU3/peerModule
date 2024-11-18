@@ -44,7 +44,7 @@ export default function enablePeerModule(server: http.Server, path: string, opti
                 case 'icecandidate':
                     if(!pair) return ws.send(createMessage('error', 'undefined id'));
                     const socketIndex = pair.sockets.findIndex(socket => socket === ws);
-                    if(pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate'));
+                    if(pair.state !== 'offer' && pair.state !== 'answer' && pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate'));
                     if(socketIndex === -1) return ws.send(createMessage('error', 'permission denied'));
                     pair.sockets[(socketIndex+1)%2]?.send(createMessage('icecandidate', data));
                     ws.send(createMessage('success', null));

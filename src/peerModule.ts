@@ -4,7 +4,7 @@ import http from 'http';
 const socketMap: Map<string, { sockets: [WebSocket?, WebSocket?], state: 'waiting' | 'offer' | 'answer' | 'connection' }> = new Map();
 const connectionMap: Map<WebSocket, string[]> = new Map();
 
-export function enablePeerModule(server: http.Server, path: string, option: { destroySocket: boolean } = { destroySocket: false }) {
+export default function enablePeerModule(server: http.Server, path: string, option: { destroySocket: boolean } = { destroySocket: false }) {
 	const wss = new ws.Server({ noServer: true });
 	wss.on('connection', (ws: WebSocket) => {
 		ws.on('message', function (msg) {

@@ -7,6 +7,7 @@ const connectionMap: Map<WebSocket, string[]> = new Map();
 export default function enablePeerModule(server: http.Server, path: string, option: { destroySocket: boolean } = { destroySocket: false }) {
 	const wss = new ws.Server({ noServer: true });
 	wss.on('connection', (ws: WebSocket) => {
+        ws.send(createMessage('success', 'connected peer server', ""));
 		ws.on('message', function (msg) {
             const { type, id, data } = JSON.parse(msg.toString());
             if(typeof id !== 'string' || id.length === 0) return ws.send(createMessage('error', 'id not found', ""))
@@ -116,7 +117,8 @@ type MessageType = 'error' | 'success' | 'request offer' | 'request answer' | 's
 type MessageBody = 'undefined id' | 'id not found' | 'room is full' | 'waiting other' |'connection started' |
                    'no waiting offer' | 'no waiting answer' | 'no waiting candidate' | 'permission denied' |
                     null| object |
-                   'invalid offer' | 'invalid answer';
+                   'invalid offer' | 'invalid answer'|
+                   'connected peer server';
 function createMessage(type: MessageType, body: MessageBody, id: string) {
     return JSON.stringify({ type, message: body, id });
 }

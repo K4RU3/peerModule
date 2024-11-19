@@ -9,49 +9,50 @@ export default function enablePeerModule(server: http.Server, path: string, opti
 	wss.on('connection', (ws: WebSocket) => {
 		ws.on('message', function (msg) {
             const { type, id, data } = JSON.parse(msg.toString());
+            if(typeof id !== 'string' || id.length === 0) return ws.send(createMessage('error', 'id not found', ""))
             const pair = socketMap.get(id);
             switch(type){
                 case "join":
                     let result = addSocket(ws, id);
                     switch(result) {
-                        case -1: ws.send(createMessage('error', 'undefined id')); break;
-                        case 0: ws.send(createMessage('error', 'room is full')); break;
-                        case 1: ws.send(createMessage('success', 'waiting other')); break;
-                        case 2: ws.send(createMessage('success', 'connection started')); break;
+                        case -1: ws.send(createMessage('error', 'undefined id', id)); break;
+                        case 0: ws.send(createMessage('error', 'room is full', id)); break;
+                        case 1: ws.send(createMessage('success', 'waiting other', id)); break;
+                        case 2: ws.send(createMessage('success', 'connection started', id)); break;
                     }
                     break;
 
                 case "offer":
-                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
-                    if(pair.state !== 'offer') return ws.send(createMessage('error', 'no waiting offer'));
-                    if(pair.sockets[0] !== ws) return ws.send(createMessage('error', 'permission denied'));
-                    if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid offer'));
+                    if(!pair) return ws.send(createMessage('error', 'undefined id', id));
+                    if(pair.state !== 'offer') return ws.send(createMessage('error', 'no waiting offer', id));
+                    if(pair.sockets[0] !== ws) return ws.send(createMessage('error', 'permission denied', id));
+                    if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid offer', id));
                     pair.state = 'answer';
-                    pair.sockets[1]?.send(createMessage('request answer', data));
-                    ws.send(createMessage('success', null));
+                    pair.sockets[1]?.send(createMessage('request answer', data, id));
+                    ws.send(createMessage('success', null, id));
                     break;
 
                 case 'answer':
-                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
-                    if(pair.state !== 'answer') return ws.send(createMessage('error', 'no waiting answer'));
-                    if(pair.sockets[1] !== ws) return ws.send(createMessage('error', 'permission denied'));
-                    if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid answer'));
+                    if(!pair) return ws.send(createMessage('error', 'undefined id', id));
+                    if(pair.state !== 'answer') return ws.send(createMessage('error', 'no waiting answer', id));
+                    if(pair.sockets[1] !== ws) return ws.send(createMessage('error', 'permission denied', id));
+                    if(!data || typeof data !== 'object') return ws.send(createMessage('error', 'invalid answer', id));
                     pair.state = 'connection';
-                    pair.sockets[0]?.send(createMessage('sdp answer', data));
-                    ws.send(createMessage('success', null));
+                    pair.sockets[0]?.send(createMessage('sdp answer', data, id));
+                    ws.send(createMessage('success', null, id));
                     break;
 
                 case 'icecandidate':
-                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
+                    if(!pair) return ws.send(createMessage('error', 'undefined id', id));
                     const socketIndex = pair.sockets.findIndex(socket => socket === ws);
-                    if(pair.state !== 'offer' && pair.state !== 'answer' && pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate'));
-                    if(socketIndex === -1) return ws.send(createMessage('error', 'permission denied'));
-                    pair.sockets[(socketIndex+1)%2]?.send(createMessage('icecandidate', data));
-                    ws.send(createMessage('success', null));
+                    if(pair.state !== 'offer' && pair.state !== 'answer' && pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate', id));
+                    if(socketIndex === -1) return ws.send(createMessage('error', 'permission denied', id));
+                    pair.sockets[(socketIndex+1)%2]?.send(createMessage('icecandidate', data, id));
+                    ws.send(createMessage('success', null, id));
                     break;
 
                 case 'disconnect':
-                    if(!pair) return ws.send(createMessage('error', 'undefined id'));
+                    if(!pair) return ws.send(createMessage('error', 'undefined id', id));
                     pair.sockets.splice(pair.sockets.findIndex(socket => socket === ws), 1);
                     pair.state = 'waiting';
                     if(pair.sockets.length === 0) socketMap.delete(id);
@@ -92,7 +93,7 @@ function addSocket(socket: WebSocket, id: string): -1|0|1|2 {
         switch(pair.sockets.length){
             case 1:
                 pair.state = 'offer';
-                pair.sockets[0]?.send(createMessage('request offer', null));
+                pair.sockets[0]?.send(createMessage('request offer', null, id));
             case 0:
                 pair.sockets.push(socket);
                 const connections = connectionMap.get(socket);
@@ -112,10 +113,10 @@ function addSocket(socket: WebSocket, id: string): -1|0|1|2 {
 }
 
 type MessageType = 'error' | 'success' | 'request offer' | 'request answer' | 'sdp answer' | 'icecandidate';
-type MessageBody = 'undefined id' | 'room is full' | 'waiting other' |'connection started' |
+type MessageBody = 'undefined id' | 'id not found' | 'room is full' | 'waiting other' |'connection started' |
                    'no waiting offer' | 'no waiting answer' | 'no waiting candidate' | 'permission denied' |
                     null| object |
                    'invalid offer' | 'invalid answer';
-function createMessage(type: MessageType, body: MessageBody) {
-    return JSON.stringify({ type, message: body });
+function createMessage(type: MessageType, body: MessageBody, id: string) {
+    return JSON.stringify({ type, message: body, id });
 }

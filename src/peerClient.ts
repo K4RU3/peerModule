@@ -53,11 +53,7 @@ class PeerClient{
                     this._ws.send(JSON.stringify({
                         id: matchmakeId,
                         type: 'icecandidate',
-                        data: {
-                            candidate: event.candidate,
-                            sdpMid: event.candidate.sdpMid,
-                            sdpMLineIndex: event.candidate.sdpMLineIndex,
-                        }
+                        data: event.candidate
                     }))
                 }
             }

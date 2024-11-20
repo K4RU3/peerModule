@@ -50,7 +50,6 @@ export default function enablePeerModule(server: http.Server, path: string, opti
                         if(pair.state !== 'offer' && pair.state !== 'answer' && pair.state !== 'connection') return ws.send(createMessage('error', 'no waiting candidate', id));
                         if(socketIndex === -1) return ws.send(createMessage('error', 'permission denied', id));
                         pair.sockets[(socketIndex+1)%2]?.send(createMessage('icecandidate', data, id));
-                        ws.send(createMessage('success', null, id));
                         break;
 
                     case 'disconnect':

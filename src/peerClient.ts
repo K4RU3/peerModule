@@ -21,6 +21,7 @@ class PeerClient{
     _ws: WebSocket;
     _opend: boolean = false;
     _onMessageList: ((msg: MessageEvent) => void)[] = [];
+    _onOpen: () => void = () => {};
     constructor(url: string){
         this._ws = new WebSocket(url);
         this._ws.onopen = () => {
@@ -35,10 +36,16 @@ class PeerClient{
                             if(!this.isValidJsonObject(JSON.parse(msg.data))) throw new Error("Invalid Message from Server.");
                             this._onMessageList.forEach(cb => cb(msg));
                         }
+                        this._onOpen();
                     }
                 }
             }
         }
+    }
+
+    set onopen(callback: ()=>void){
+        if(this._opend) callback();
+        else this._onOpen = callback;
     }
 
     async matchmake(matchmakeId: string, option?: RTCConfiguration): Promise<PeerConnection> {

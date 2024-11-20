@@ -182,3 +182,5 @@ class PeerConnection {
         this._channel.send(data);
     }
 }
+
+export default PeerClient;

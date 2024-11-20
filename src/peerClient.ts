@@ -66,11 +66,8 @@ class PeerClient{
                 const { type, id, message } = parsed;
                 if(matchmakeId === id) {
                     if(type === 'icecandidate') {
-                        peer.addIceCandidate(new RTCIceCandidate(message as RTCIceCandidateInit)).then(() => {
-                            if(peer.connectionState === 'connected') {
-                                resolve(new PeerConnection(dataChannel));
-                            }
-                        })
+                        peer.addIceCandidate(new RTCIceCandidate(message as RTCIceCandidateInit));
+                        return;
                     }
                     switch(status){
                         case 'waiting':
@@ -117,19 +114,20 @@ class PeerClient{
                             if(type === 'sdp answer'){
                                 peer.setRemoteDescription(new RTCSessionDescription(message as RTCSessionDescriptionInit)).then(() => {
                                     status = 'connection'
-                                    if(peer.connectionState === 'connected') {
-                                        resolve(new PeerConnection(dataChannel));
-                                    }
                                 })
-                            }else if(type === 'success'){
-                                if(peer.connectionState === 'connected') {
-                                    resolve(new PeerConnection(dataChannel));
-                                }
                             }
+                            break;
                         default: break;
                     }
                 }
             }
+
+            peer.onconnectionstatechange = () => {
+                if(peer.connectionState === "connected"){
+                    resolve(new PeerConnection(dataChannel));
+                }
+            }
+
             this.addOnMessage(cb);
         })
     }

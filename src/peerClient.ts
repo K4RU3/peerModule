@@ -166,11 +166,19 @@ class PeerClient{
 
 class PeerConnection {
     _channel: RTCDataChannel;
+    _onmessage: ((msg: MessageEvent) => void) = ()=>{};
     constructor(channel: RTCDataChannel){
         this._channel = channel
+        this._channel.onmessage = (msg: MessageEvent) => {
+            this._onmessage(msg);
+        }
     }
 
-    get testGetChannel() { return this._channel; }
-    
-    get testGetPeer() { return this._channel; }
+    set onmessage(callback: ()=>{}){
+        if(typeof callback === 'function') this._onmessage = callback;
+    }
+
+    send(data: any){
+        this._channel.send(data);
+    }
 }

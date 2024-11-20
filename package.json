@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-      "debug": "tsc && node dist/index.js"
+      "deploy": "tsc --project tsclientconfig.json && tsc --project tsserverconfig.json"
   },
   "keywords": [],
   "author": "",

@@ -131,7 +131,7 @@ class PeerClient{
 
             peer.onconnectionstatechange = () => {
                 if(peer.connectionState === "connected"){
-                    resolve(new PeerConnection(dataChannel));
+                    resolve(new PeerConnection(peer, dataChannel));
                 }
             }
 
@@ -172,9 +172,11 @@ class PeerClient{
 }
 
 class PeerConnection {
+    _peer: RTCPeerConnection;
     _channel: RTCDataChannel;
     _onmessage: ((msg: MessageEvent) => void) = ()=>{};
-    constructor(channel: RTCDataChannel){
+    constructor(peer: RTCPeerConnection, channel: RTCDataChannel){
+        this._peer = peer
         this._channel = channel
         this._channel.onmessage = (msg: MessageEvent) => {
             this._onmessage(msg);

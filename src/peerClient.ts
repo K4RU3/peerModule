@@ -86,10 +86,7 @@ class PeerClient{
                                 if(message === 'connection started') {
                                     status = 'offer';
                                 }
-                            }
-                            break;
-                        case 'offer':
-                            if(type === 'request offer') {
+                            }else if(type === 'request offer') {
                                 peer.createOffer().then(offer => {
                                     peer.setLocalDescription(offer).then(() => {
                                         this._ws.send(JSON.stringify({
@@ -100,7 +97,10 @@ class PeerClient{
                                         status = 'answer';
                                     })
                                 });
-                            }else if(type === 'request answer'){
+                            }
+                            break;
+                        case 'offer':
+                            if(type === 'request answer'){
                                 peer.setRemoteDescription(new RTCSessionDescription(message as RTCSessionDescriptionInit)).then(() => {
                                     peer.createAnswer().then(answer => {
                                         peer.setLocalDescription(answer).then(() => {
